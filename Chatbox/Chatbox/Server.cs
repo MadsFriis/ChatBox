@@ -57,7 +57,6 @@ namespace Chatbox
 
                     while (true)
                     {
-
                         int numByte = clientSocket.Receive(bytes);
 
                         data += Encoding.ASCII.GetString(bytes,
