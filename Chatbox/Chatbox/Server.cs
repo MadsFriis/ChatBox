@@ -10,7 +10,7 @@ namespace Chatbox
 {
     internal class Server
     {
-        internal static void ExecuteServer()
+        internal static void ExecuteServer(int port)
         {
             // Establish the local endpoint
             // for the socket. Dns.GetHostName
@@ -18,12 +18,11 @@ namespace Chatbox
             // running the application.
             IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ipAddr = ipHost.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddr, port);
 
             // Creation TCP/IP Socket using
             // Socket Class Constructor
-            Socket listener = new Socket(ipAddr.AddressFamily,
-                         SocketType.Stream, ProtocolType.Tcp);
+            Socket listener = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             try
             {
@@ -39,47 +38,44 @@ namespace Chatbox
                 // the Client list that will want
                 // to connect to Server
                 listener.Listen(10);
+                Console.WriteLine("Waiting connection ... ");
 
-                while (true)
+                // Suspend while waiting for
+                // incoming connection Using
+                // Accept() method the server
+                // will accept connection of client
+                Socket clientSocket = listener.Accept();
+                try
                 {
-
-                    Console.WriteLine("Waiting connection ... ");
-
-                    // Suspend while waiting for
-                    // incoming connection Using
-                    // Accept() method the server
-                    // will accept connection of client
-                    Socket clientSocket = listener.Accept();
-
-                    // Data buffer
-                    byte[] bytes = new Byte[1024];
                     string data = null;
-
-                    while (true)
+                    do
                     {
+                        // Data buffer
+                        byte[] bytes = new Byte[1024];
                         int numByte = clientSocket.Receive(bytes);
+                        data = Encoding.ASCII.GetString(bytes, 0, numByte);
+                        Console.WriteLine("Text received -> {0} ", data);
+                        byte[] message = Encoding.ASCII.GetBytes("Test Server");
 
-                        data += Encoding.ASCII.GetString(bytes,
-                                                   0, numByte);
+                        // Send a message to Client
+                        // using Send() method
+                        clientSocket.Send(message);
 
-                        if (data.IndexOf("<EOF>") > -1)
-                            break;
-                    }
-
-                    Console.WriteLine("Text received -> {0} ", data);
-                    byte[] message = Encoding.ASCII.GetBytes("Test Server");
-
-                    // Send a message to Client
-                    // using Send() method
-                    clientSocket.Send(message);
-
+                    } while (!data.Contains("close"));
+                }
+                finally
+                {
                     // Close client Socket using the
                     // Close() method. After closing,
                     // we can use the closed Socket
                     // for a new Client Connection
+                    Console.WriteLine("---------------Server closed---------------");
                     clientSocket.Shutdown(SocketShutdown.Both);
                     clientSocket.Close();
+
                 }
+                //while (true)
+
             }
 
             catch (Exception e)
